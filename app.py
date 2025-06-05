@@ -41,6 +41,10 @@ if api_key:
     ## Processing uploaded files
     if uploaded_file:
         documents=[]
+        total_files=len(uploaded_file)
+        if total_files > 20:
+            st.error("You can upload a maximum of 20 PDF files.")
+            st.stop()
         for doc in uploaded_file:
             tempPdf=f"./temp.pdf"
             with open(tempPdf,"wb") as file:
@@ -49,6 +53,11 @@ if api_key:
             
             loader=PyPDFLoader(tempPdf)
             docs=loader.load()
+            page_count = len(docs)
+            if page_count > 1000:
+                st.error(f"{file_name} has {page_count} pages. Max allowed is 1000 pages per document.")
+                st.stop()
+    
             documents.extend(docs)
     
         text_splitter=RecursiveCharacterTextSplitter(chunk_size=5100,chunk_overlap=200)
