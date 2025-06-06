@@ -15,6 +15,11 @@ from langchain.chains.combine_documents import create_stuff_documents_chain
 from dotenv import load_dotenv
 import os
 import streamlit as st
+import sqlite3
+import pandas as pd
+from datetime import datetime, timedelta
+
+
 
 load_dotenv()
 
@@ -22,6 +27,33 @@ os.environ["HUGGINGFACE_TOKEN"]=os.getenv("HUGGINGFACE_TOKEN")
 os.environ["USE_TF"] = "0" 
 embeddings=HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
 
+
+def init_metadata_db():
+    conn = sqlite3.connect("metadata.db")
+    cursor = conn.cursor()
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS documents (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            filename TEXT,
+            upload_time TEXT,
+            page_count INTEGER,
+            chunk_count INTEGER
+        )
+    """)
+    conn.commit()
+    conn.close()
+
+def delete_old_metadata(days=7):
+    cutoff_time = datetime.now() - timedelta(days=days)
+    conn = sqlite3.connect("metadata.db")
+    cursor = conn.cursor()
+    cursor.execute("DELETE FROM documents WHERE upload_time < ?", (cutoff_time.isoformat(),))
+    conn.commit()
+    conn.close()
+    
+    
+init_metadata_db()
+delete_old_metadata(days=7) 
 # Streamlit
 st.title("Conversational RAG with PDF uploads and chat history")
 st.write("Upload PDF and chat with their content")
@@ -45,6 +77,8 @@ if api_key:
         if total_files > 20:
             st.error("You can upload a maximum of 20 PDF files.")
             st.stop()
+        conn = sqlite3.connect("metadata.db")
+        cursor = conn.cursor()
         for doc in uploaded_file:
             tempPdf=f"./temp.pdf"
             with open(tempPdf,"wb") as file:
@@ -57,11 +91,21 @@ if api_key:
             if page_count > 1000:
                 st.error(f"{file_name} has {page_count} pages. Max allowed is 1000 pages per document.")
                 st.stop()
-    
+           
+           
+            text_splitter = RecursiveCharacterTextSplitter(chunk_size=5100, chunk_overlap=200)
+            splits = text_splitter.split_documents(docs)
+            chunk_count = len(splits)
+            
+            cursor.execute("""
+                INSERT INTO documents (filename, upload_time, page_count, chunk_count)
+                VALUES (?, ?, ?, ?)
+            """, (file_name, datetime.now().isoformat(), page_count, chunk_count))
             documents.extend(docs)
-    
-        text_splitter=RecursiveCharacterTextSplitter(chunk_size=5100,chunk_overlap=200)
-        splits=text_splitter.split_documents(documents)
+            
+        conn.commit()
+        conn.close()
+
         vectorStore=FAISS.from_documents(documents,embedding=embeddings)
         retriever=vectorStore.as_retriever()
     
@@ -121,6 +165,11 @@ if api_key:
         )
 
         user_input = st.text_input("Your question:")
+        if st.button("📄 View Uploaded Document Metadata"):
+            conn = sqlite3.connect("metadata.db")
+            df = pd.read_sql_query("SELECT * FROM documents ORDER BY upload_time DESC", conn)
+            conn.close()
+            st.dataframe(df)
         if user_input:
             session_history=get_session_history(session_id)
             response = conversational_rag_chain.invoke(
