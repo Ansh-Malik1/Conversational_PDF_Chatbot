@@ -11,8 +11,8 @@ services:
     volumes:
       - .:/app
     environment:
-      - HUGGINGFACE_TOKEN=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
-      - GROQ_API_KEY=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
+      - HUGGINGFACE_TOKEN=
+      - GROQ_API_KEY=
     depends_on:
       - fastapi
 
@@ -27,5 +27,5 @@ services:
       - ./backend:/app
       - ./metadata.db:/app/metadata.db
     environment:
-      - HUGGINGFACE_TOKEN=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
-      - GROQ_API_KEY=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
+      - HUGGINGFACE_TOKEN=
+      - GROQ_API_KEY=
