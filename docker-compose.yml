@@ -1,0 +1,31 @@
+version: "3.9"
+
+services:
+  streamlit:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: streamlit run app.py --server.port=8501 --server.address=0.0.0.0
+    ports:
+      - "8501:8501"
+    volumes:
+      - .:/app
+    environment:
+      - HUGGINGFACE_TOKEN=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
+      - GROQ_API_KEY=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
+    depends_on:
+      - fastapi
+
+  fastapi:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/app
+      - ./metadata.db:/app/metadata.db
+    environment:
+      - HUGGINGFACE_TOKEN=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
+      - GROQ_API_KEY=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
