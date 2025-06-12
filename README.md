@@ -1,5 +1,5 @@
 ﻿
-# 🚀 PanScience RAG Assignment
+# 🚀 Conversational PDF Chatbot
 
 A full-stack, Dockerized **Retrieval-Augmented Generation (RAG)** system that allows users to upload PDF documents and ask questions about their contents through a conversational chatbot interface.
 Demo Video : https://www.loom.com/share/c2143b0b08534a67b74036b8f54c5630?sid=0875e334-0f13-44ec-a1e8-e2d98931ba87
