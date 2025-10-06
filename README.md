@@ -106,12 +106,12 @@ Accessible at:
 
 Example query:
 
-```json
 POST /query/
+```
 {
   "question": "What is the summary of document 1?"
 }
-
+```
 ## 🧱 Deployment
 
 ### 📍 Render / Railway / VM
@@ -169,5 +169,6 @@ GitHub: [Ansh-Malik1](https://github.com/Ansh-Malik1)
 ## 📬 Contact & Submission
 
 * Clone or download this repo
-* Or access deployed version (if applicable)
+* Or access deployed version 
 * Contact for deployment help or further demo
+
